@@ -1,0 +1,29 @@
+name: Security Scan (SAST)
+
+on: [push, pull_request]
+
+jobs:
+  bandit_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit Scan
+        # -lll busca solo vulnerabilidades de severidad alta
+        # --exit-zero permite que el pipeline no falle si encuentra algo (opcional)
+        run: bandit -r . -f txt -o scan_results.txt || true
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: bandit-report
+          path: scan_results.txt
