@@ -1,0 +1,31 @@
+name: Security Scan (SAST)
+
+on: [push, pull_request]
+
+jobs:
+  bandit_scan:
+    runs-on: ubuntu-latest
+    steps:
+      # He actualizado checkout a v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # He actualizado setup-python a v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit Scan
+        # El "|| true" asegura que el paso continúe para poder subir el reporte
+        run: bandit -r . -f txt -o scan_results.txt || true
+
+      # AQUÍ ESTABA EL ERROR: Cambiamos de v3 a v4
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: scan_results.txt
