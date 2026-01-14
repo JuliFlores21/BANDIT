@@ -1,0 +1,32 @@
+name: Security Pipeline
+
+on: [push]
+
+jobs:
+  sast_scan:
+    name: Run Bandit (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Bandit
+        run: pip install bandit
+      - name: Scan Code
+        # El pipeline fallará si encuentra vulnerabilidades de nivel medio o alto
+        run: bandit -r . -ll
+
+  dast_scan:
+    name: Run OWASP ZAP (DAST)
+    runs-on: ubuntu-latest
+    needs: sast_scan # Solo corre si el SAST pasó
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Start Application
+        run: |
+          pip install flask
+          python app.py & 
+          sleep 5 # Esperar a que la app suba
+      - name: ZAP Scan
+        uses: zaproxy/action-baseline@v0.6.0
+        with:
+          target: 'http://localhost:5000/search?id=1'
